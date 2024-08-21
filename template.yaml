@@ -50,6 +50,9 @@ Resources:
           Properties:
             Path: /api
             Method: put
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: test-table
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
