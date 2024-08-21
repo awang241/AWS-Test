@@ -1,11 +1,12 @@
 import * as fs from 'node:fs';
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 
 
 //const html = fs.readFileSync('index.html', { encoding: 'utf8' });
 const dbClient = new DynamoDBClient({});
 const dbDocClient = DynamoDBDocumentClient.from(dbClient);
+const tableName = 'test-table'
 
 /**
  * Returns an HTML page containing an interactive Web-based tutorial.
@@ -28,6 +29,26 @@ export const handler = async (event) => {
                 'Content-Type': 'application/json',
             };
             body = JSON.stringify(dbResult.Items);
+        } else if (method == "PUT") {
+            let requestItem = JSON.parse(event.body);
+            if (Number.isInteger(requestItem.id)) {
+                const a = await dbDocClient.send(
+                    new PutCommand({
+                        TableName: 'test-table',
+                        Item: {
+                            id: requestItem.id,
+                            Hands: requestItem.Hands,
+                            name: requestItem.name
+                        }
+                    })  
+                );
+                console.log(a);
+                statusCode = 204;
+            } else {
+                statusCode = 400;
+                body = `Invalid id ${requestItem.id}`;
+            }
+            
         } else {
             statusCode = 405;
             body = `${method} method not supported for this endpoint`;
@@ -35,6 +56,7 @@ export const handler = async (event) => {
         
     }
     catch (error) {
+        console.log(error);
         statusCode = 400;
         headers = {
             'Content-Type': 'application/json',
